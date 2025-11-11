@@ -649,23 +649,33 @@ async def get_task_status(task_id: str):
 @app.get("/task/{task_id}/download")
 async def download_task_result(task_id: str):
     """
-    Download the processed video file.
+    Download the processed video file or get task status.
     
     - **task_id**: The task ID returned from merge endpoints
     
-    Returns the processed video file if task is completed successfully.
+    Returns the processed video file if task is completed successfully,
+    or returns the current task status if still processing.
     """
     
     task_data = get_task(task_id)
     if not task_data:
         raise HTTPException(status_code=404, detail="Task not found")
     
+    # If task is not completed, return status instead of file
     if task_data["status"] != TaskStatus.SUCCESS:
-        raise HTTPException(
-            status_code=400, 
-            detail=f"Task is not completed successfully. Current status: {task_data['status']}"
-        )
+        return {
+            "task_id": task_id,
+            "status": task_data["status"],
+            "type": task_data["type"],
+            "message": task_data.get("message", ""),
+            "created_at": task_data["created_at"],
+            "updated_at": task_data["updated_at"],
+            "video_filename": task_data.get("video_filename"),
+            "audio_filename": task_data.get("audio_filename"),
+            "error": task_data.get("error")
+        }
     
+    # Task completed successfully, return the file
     output_file = task_data.get("output_file")
     if not output_file:
         raise HTTPException(status_code=500, detail="Output file not found in task data")
