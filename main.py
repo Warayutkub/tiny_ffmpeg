@@ -139,7 +139,7 @@ def cleanup_old_files():
         logger.error(f"Error during file cleanup: {e}")
 
 # Background processing functions
-async def process_merge_video_audio(task_id: str, video_path: Path, audio_path: Path):
+def process_merge_video_audio(task_id: str, video_path: Path, audio_path: Path):
     """Background task to merge video and audio"""
     try:
         update_task_status(task_id, TaskStatus.PROCESSING, message="Loading video and audio files")
@@ -421,7 +421,7 @@ async def merge_video_audio(
         save_task(task_id, task_data)
         
         # Start background processing
-        asyncio.create_task(process_merge_video_audio(task_id, temp_video_path, temp_audio_path))
+        background_tasks.add_task(process_merge_video_audio, task_id, temp_video_path, temp_audio_path)
         
         logger.info(f"Task {task_id} created and queued for processing")
         
